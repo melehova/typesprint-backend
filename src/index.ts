@@ -1,18 +1,68 @@
 import fastify, { FastifyRequest, FastifyReply } from 'fastify';
 import { RedisClientType, createClient } from '@redis/client';
 import cookie from '@fastify/cookie';
-import type { FastifyCookieOptions } from '@fastify/cookie'
+import type { FastifyCookieOptions } from '@fastify/cookie';
+
 import axios from 'axios';
 import dotenv from 'dotenv';
 import verification from './middleware/verification';
 
+import fastifySocketIO from 'fastify-socket.io';
+
 dotenv.config();
 const server = fastify();
+
+export const redis: RedisClientType = createClient({
+    url: process.env.REDIS_URL,
+    password: process.env.REDIS_PWD,
+});
 
 server.register(cookie, {
     secret: "secret",
     parseOptions: {}
 } as FastifyCookieOptions);
+
+
+server.register(fastifySocketIO);
+
+const start = async () => {
+    try {
+        await redis.connect();
+
+        redis.on('error', (err) => console.error('Redis error:', err));
+
+        server.listen({ port: process.env.PORT }, (_, address) => {
+            console.log(`Server is running at: ${address}`);
+        });
+
+        console.log('Connected to redis');
+    } catch (err) {
+        console.error('Error starting server:', err);
+        process.exit(1);
+    }
+};
+
+start();
+server.ready((err) => {
+    if (err) {
+        throw err;
+    }
+
+    server.io.on('connection', (socket) => {
+        console.log(`A user [${socket.id}] connected`);
+
+        socket.on('message', (message) => {
+            console.log('Received message:', message);
+            // Broadcast the message to all connected clients
+            // socket.broadcast.emit('message', message);
+            server.io.emit('message', message);
+        });
+
+        socket.on('disconnect', (socket) => {
+            console.log(`A user [${socket}] disconnected`);
+        });
+    });
+});
 
 server.get('/login', async (request: FastifyRequest, reply: FastifyReply) => {
     const redirectUri = `http://${process.env.HOST}:${process.env.PORT}/callback`;
@@ -75,29 +125,6 @@ server.get('/logout', async (request: FastifyRequest, reply: FastifyReply) => {
     }
 });
 
-server.get('/', { preHandler: verification }, (request) => 'boom');
+server.get('/', { preHandler: verification }, (req, reply) => 'boom');
 
 server.get('/ping', () => 'pong\n');
-
-export const redis: RedisClientType = createClient({
-    url: process.env.REDIS_URL,
-    password: process.env.REDIS_PWD,
-});
-
-const start = async () => {
-    try {
-        await redis.connect();
-
-        redis.on('error', (err) => console.error('Redis error:', err));
-
-        server.listen({ port: process.env.PORT }, (_, address) => {
-            console.log(`Server is running at: ${address}`);
-        });
-        console.log('Connected to redis');
-    } catch (err) {
-        console.error('Error starting server:', err);
-        process.exit(1);
-    }
-};
-
-start();
