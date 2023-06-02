@@ -49,13 +49,15 @@ server.ready((err) => {
     }
 
     server.io.on('connection', (socket) => {
-        console.log(`A user [${socket.id}] connected`);
+        const room = 'some room';
+        socket.join(room);
+        console.log(`A user [${socket.id}] joined [${room}]`);
+        socket.to(room).emit('message', `A user [${socket.id}] joined [${room}]`);
 
         socket.on('message', (message) => {
             console.log('Received message:', message);
             // Broadcast the message to all connected clients
-            // socket.broadcast.emit('message', message);
-            server.io.emit('message', message);
+            socket.to(room).emit('message', message);
         });
 
         socket.on('disconnect', (socket) => {
@@ -103,8 +105,9 @@ server.get('/callback', async (request: FastifyRequest, reply: FastifyReply) => 
             httpOnly: true,
             maxAge: 3600,
         });
+        reply.redirect(`http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}/room`);
 
-        reply.send({ message: 'OAuth callback successful' });
+        // reply.send({ message: 'OAuth callback successful' });
     } catch (error) {
         console.error('OAuth callback error:', error);
         reply.code(500).send({ error: 'OAuth callback failed' });
