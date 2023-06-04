@@ -1,31 +1,34 @@
 import { FastifyRequest, FastifyReply, HookHandlerDoneFunction } from 'fastify';
-import { redis } from '../index';
-import refreshToken from './refreshToken';
+import cacheManager from '../utils/cacheManager';
 
-declare module 'fastify' {
-    interface FastifyRequest {
-        userId?: string;
-    }
-}
 export default async (request: FastifyRequest, reply: FastifyReply, done: HookHandlerDoneFunction) => {
     try {
-        const access_token = request.cookies?.access_token || '';
-
-        const tokenExists = await redis.exists(access_token);
-        if (!tokenExists) {
-            throw new Error('Unauthorized');
-        }
-
-        const accessToken = await refreshToken(access_token);
-
-        reply.setCookie('access_token', accessToken, {
-            path: '/',
-            httpOnly: true,
-            maxAge: 3600,
-        });
-
-        done();
+      const { 'user-id': userId = '', 'access-token': accessToken = '' } = request.cookies;
+  
+      // Verify and validate the token
+      const isValidToken = await cacheManager.validateToken(userId, accessToken);
+  
+      if (!isValidToken) {
+        // Handle invalid token case
+        reply.code(401).send('Invalid token');
+        return;
+      }
+    
+      // Set the updated access token in the response cookies
+      reply.setCookie('access-token', accessToken, {
+        path: '/',
+        httpOnly: true,
+        maxAge: 3600,
+      });
+  
+      reply.setCookie('user-id', userId, {
+        path: '/',
+        httpOnly: true,
+        maxAge: 3600,
+      });
+  
+      done();
     } catch (error: any) {
-        reply.code(401).send(error);
+      reply.code(500).send('Internal server error');
     }
-};
+  };
