@@ -51,7 +51,6 @@ export const callback = async function (request: FastifyRequest, reply: FastifyR
 
         // reply.send({ message: 'OAuth callback successful' });
     } catch (error) {
-        console.error('OAuth callback error:', error);
         reply.code(500).send({ error: 'OAuth callback failed' });
     }
 };
@@ -66,7 +65,6 @@ export const logout = async function (request: FastifyRequest, reply: FastifyRep
 
         reply.send({ message: 'Logout successful' });
     } catch (error) {
-        console.error('Logout error:', error);
         reply.code(500).send({ error: 'Logout failed' });
     }
 }
