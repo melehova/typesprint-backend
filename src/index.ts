@@ -1,17 +1,37 @@
-import fastify from 'fastify';
+import dotenv from 'dotenv';
+import fastify, { errorCodes } from 'fastify';
+import fastifySocketIO from 'fastify-socket.io';
 
 import cookie from '@fastify/cookie';
 import type { FastifyCookieOptions } from '@fastify/cookie';
-import cacheManager from './utils/cacheManager';
 
-import dotenv from 'dotenv';
+import cacheManager from './utils/cacheManager';
+import router from './routes';
 import verification from './middleware/verification';
 
-import fastifySocketIO from 'fastify-socket.io';
-import router from './routes';
-
 dotenv.config();
-const server = fastify();
+const server = fastify({
+    logger: require('pino')({
+        transport: {
+            target: 'pino-pretty',
+            options: {
+                colorize: true
+            }
+        }
+    }),
+});
+
+server.setErrorHandler(function (error, request, reply) {
+    if (error instanceof errorCodes.FST_ERR_BAD_STATUS_CODE) {
+        // Log error
+        this.log.error(error)
+        // Send error response
+        reply.status(500).send({ ok: false })
+    } else {
+        // fastify will use parent error handler to handle this
+        reply.send(error)
+    }
+})
 
 server.register(cookie, {
     secret: "secret",
@@ -72,5 +92,3 @@ server.ready((err) => {
 });
 
 server.get('/', { preHandler: verification }, (req, reply) => 'boom');
-
-server.get('/ping', () => 'pong\n');
