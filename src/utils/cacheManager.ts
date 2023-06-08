@@ -1,10 +1,6 @@
 import { RedisClientType, createClient } from '@redis/client';
 import axios, { AxiosResponse } from 'axios';
-
-interface TokenInfo {
-    token: string;
-    expired_at: string;
-}
+import { GAME_STATE } from '../gamestates';
 
 class CacheManager {
     private redis!: RedisClientType;
@@ -36,9 +32,17 @@ class CacheManager {
         }
     }
 
+    public async hgetall<T>(key: string): Promise<{ [x: string]: string; } | null> {
+        try {
+            return await this.redis.hGetAll(key);
+        } catch (error) {
+            throw new Error('Error accessing hash cache');
+        }
+    }
+
     public async hset(key: string, field: string, value: any): Promise<void> {
         try {
-            await this.redis.hSet(key, field, JSON.stringify(value));
+            await this.redis.hSet(key, field, typeof value !== 'string' ? JSON.stringify(value) : value);
         } catch (error) {
             throw new Error('Error setting hash cache');
         }
@@ -52,27 +56,42 @@ class CacheManager {
         }
     }
 
-    public async addToken(userId: string, token: string, expiredAt: Date): Promise<void> {
-        const tokenInfo = {
-            token: token,
-            expired_at: expiredAt.toISOString(),
-        };
-
-        return await this.hset('tokens', userId, tokenInfo);
+    public async del(key: string): Promise<void> {
+        try {
+            await this.redis.del(key);
+        } catch (error) {
+            throw new Error('Error deleting cache');
+        }
     }
 
-    public async deleteToken(userId: string): Promise<void> {
-        await this.hdel('tokens', userId);
+    public async sadd(key: string, members: string): Promise<void> {
+        try {
+            await this.redis.sAdd(key, members);
+        } catch (error) {
+            throw new Error('Error adding value to set');
+        }
     }
 
-    public async validateToken(userId: string, token: string): Promise<boolean> {
-        const cachedToken: TokenInfo | null = await this.hget<TokenInfo>('tokens', userId);
+    public async addToken(userId: string, token: string, expiredIn: string): Promise<void[]> { // ok
+        const expiresAt = new Date(new Date().getTime() + +expiredIn * 1000).toISOString();
+
+        const tokenPromise = this.hset(`token:${userId}`, 'token', token);
+        const ExpPromise = this.hset(`token:${userId}`, 'expiresAt', expiresAt);
+        return Promise.all([tokenPromise, ExpPromise]);
+    }
+
+    public async deleteToken(userId: string): Promise<void> { // ok
+        await this.del(`token:${userId}`);
+    }
+
+    public async validateToken(userId: string, token: string): Promise<boolean> { //
+        const cachedToken = await this.hgetall(`token:${userId}`);
 
         if (cachedToken && cachedToken.token === token) {
             const currentTime = new Date().getTime();
-            const expiredAt = new Date(cachedToken.expired_at).getTime();
+            const expiresAt = new Date(cachedToken.expiresAt).getTime();
 
-            if (currentTime < expiredAt) {
+            if (currentTime < expiresAt) {
                 // Token is valid
                 return true;
             } else {
@@ -83,7 +102,7 @@ class CacheManager {
                     return true;
                 } else {
                     // Refresh token failed, remove it from cache
-                    await this.hdel('tokens', userId);
+                    await this.deleteToken(userId);
                     return false;
                 }
             }
@@ -105,19 +124,24 @@ class CacheManager {
             const { access_token, expires_in } = response.data;
 
             if (access_token && expires_in) {
-                const expiredAt = new Date().getTime() + expires_in * 1000;
-                const refreshedToken: TokenInfo = {
-                    token: access_token,
-                    expired_at: new Date(expiredAt).toISOString(),
-                };
-
-                await this.hset('tokens', userId, refreshedToken);
+                await this.addToken(userId, access_token, expires_in);
                 return access_token;
             }
 
             return null;
         } catch (error) {
             throw new Error('Error refreshing token');
+        }
+    }
+
+    public async createRoom(roomId: string, userId: string): Promise<void | null> {
+        try {
+            await this.hset(`room:${roomId}`, 'host', userId);
+            await this.hset(`room:${roomId}`, 'state', GAME_STATE.LOBBY);
+            await this.sadd(`roomPlayers:${roomId}`, userId);
+        } catch (error) {
+            console.log("create room error ", error);
+            throw new Error('Error creating room');
         }
     }
 }

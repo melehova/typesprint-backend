@@ -27,7 +27,6 @@ export default async (request: FastifyRequest, reply: FastifyReply, done: HookHa
         maxAge: 3600,
       });
   
-      done();
     } catch (error: any) {
       reply.code(500).send('Internal server error');
     }

@@ -29,11 +29,8 @@ export const callback = async function (request: FastifyRequest, reply: FastifyR
 
         const { data: { sub: userId, expires_in } } = response;
 
-        const now = Math.floor(Date.now() / 1000);
-        const expiresAt = new Date(+expires_in + now);
-
         // Store the access token in Redis
-        await cacheManager.addToken(userId, access_token, expiresAt);
+        await cacheManager.addToken(userId, access_token, expires_in);
 
         // Set the access token as a cookie
         reply.setCookie('access-token', access_token, {
