@@ -10,8 +10,8 @@ declare global {
             REDIS_HOST: string;
             REDIS_PORT: number;
             REDIS_PWD: string;
+        }
     }
-}
 }
 
 export { }

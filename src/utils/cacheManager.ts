@@ -64,9 +64,9 @@ class CacheManager {
         }
     }
 
-    public async sadd(key: string, members: string): Promise<void> {
+    public async sadd(key: string, member: string): Promise<number> {
         try {
-            await this.redis.sAdd(key, members);
+            return await this.redis.sAdd(key, member);
         } catch (error) {
             throw new Error('Error adding value to set');
         }
@@ -138,10 +138,22 @@ class CacheManager {
         try {
             await this.hset(`room:${roomId}`, 'host', userId);
             await this.hset(`room:${roomId}`, 'state', GAME_STATE.LOBBY);
-            await this.sadd(`roomPlayers:${roomId}`, userId);
+            await this.addMember(roomId, userId);
         } catch (error) {
-            console.log("create room error ", error);
             throw new Error('Error creating room');
+        }
+    }
+
+    public async validateRoom(roomId: string): Promise<number> {
+        return await this.redis.exists(`room:${roomId}`);
+    }
+
+    public async addMember(roomId: string, userId: string): Promise<number | null> {
+        try {
+            return await this.sadd(`roomPlayers:${roomId}`, userId);
+        } catch (error) {
+            console.log(error);
+            throw new Error('Error joining room');
         }
     }
 }

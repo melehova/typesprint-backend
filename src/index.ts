@@ -24,12 +24,12 @@ const server = fastify({
 server.setErrorHandler(function (error, request, reply) {
     if (error instanceof errorCodes.FST_ERR_BAD_STATUS_CODE) {
         // Log error
-        this.log.error(error)
+        this.log.error(error);
         // Send error response
-        reply.status(500).send({ ok: false })
+        reply.status(500).send({ ok: false });
     } else {
         // fastify will use parent error handler to handle this
-        reply.send(error)
+        reply.send(error);
     }
 })
 
@@ -47,12 +47,12 @@ server.register(fastifySocketIO);
 const start = async () => {
     try {
         cacheManager.connect({
-            host: process.env.REDIS_HOST,
-            port: process.env.REDIS_PORT,
-            password: process.env.REDIS_PWD
+            host: process.env.REDIS_HOST!,
+            port: +process.env.REDIS_PORT!,
+            password: process.env.REDIS_PWD!
         });
 
-        server.listen({ port: process.env.PORT }, (err, address) => {
+        server.listen({ port: +process.env.PORT! }, (err, address) => {
             if (err) {
                 console.error(err);
                 return;
