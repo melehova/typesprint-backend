@@ -152,7 +152,7 @@ class CacheManager {
         }
     }
 
-    public async deleteRoom(roomId: string, userId: string): Promise<void> {
+    public async deleteRoom(roomId: string): Promise<void> {
         try {
             await this.del(`roomPlayers:${roomId}`);
             await this.del(`room:${roomId}`);
@@ -164,6 +164,24 @@ class CacheManager {
     public async accessToRoom(roomId: string, userId: string) {
         const host = await this.hget(`room:${roomId}`, 'host');
         return (host === userId);
+    }
+
+    public async shiftHost(roomId: string) {
+        // Check if room is not empty
+        const key = `roomPlayers:${roomId}`;
+        if (await this.redis.sCard(key) - 1) {
+            // Change random host
+            const newHostId = await this.redis.sRandMember(key);
+            await this.hset(`room:${roomId}`, 'host', newHostId);
+            return newHostId;
+        }
+        // Delete Room
+        await this.deleteRoom(roomId);
+    }
+
+    public async removeMember(roomId: string, userId: string) {
+        // Delete user from roomPlayers
+        // TODO
     }
 }
 

@@ -16,15 +16,15 @@ export const joinRoom = async function (request: FastifyRequest, reply: FastifyR
     // Add member to room
     const added = await cacheManager.addMember(roomId, userId!);
     if (added) {
-        reply.code(201).send('User successfuly joined room');
+        reply.code(201).send({message: 'User successfuly joined room'});
+        return
     }
-    reply.code(208).send('User has already joined the room');
+    reply.code(208).send({message: 'User has already joined the room'});
 }
 
 export const deleteRoom = async function (request: FastifyRequest, reply: FastifyReply) {
-    const { 'user-id': userId } = request.cookies!;
     const { roomId } = request.params! as { roomId: string };
 
-    await cacheManager.deleteRoom(roomId, userId!);
+    await cacheManager.deleteRoom(roomId);
     reply.code(204);
 }
