@@ -20,13 +20,9 @@ class CacheManager {
         console.log('Successfully connected to Redis');
     };
 
-    public async hget<T>(key: string, field: string): Promise<T | null> {
+    public async hget<T>(key: string, field: string): Promise<string | null> {
         try {
-            const value = await this.redis.hGet(key, field);
-            if (value) {
-                return JSON.parse(value);
-            }
-            return null;
+            return await this.redis.hGet(key, field) || null;
         } catch (error) {
             throw new Error('Error accessing hash cache');
         }
@@ -56,9 +52,9 @@ class CacheManager {
         }
     }
 
-    public async del(key: string): Promise<void> {
+    public async del(key: string): Promise<number> {
         try {
-            await this.redis.del(key);
+            return await this.redis.del(key);
         } catch (error) {
             throw new Error('Error deleting cache');
         }
@@ -112,14 +108,16 @@ class CacheManager {
         return false;
     }
 
-    private async refreshToken(userId: string, token: string): Promise<string | null> {
+    private async refreshToken(userId: string, token: string): Promise<any> {
         try {
+            console.log('refresh', { userId, token });
             const response: AxiosResponse = await axios.post('https://oauth2.googleapis.com/token', {
                 refresh_token: token,
                 client_id: process.env.GOOGLE_CLIENT_ID,
                 client_secret: process.env.GOOGLE_CLIENT_SECRET,
                 grant_type: 'refresh_token',
             });
+            console.log(response);
 
             const { access_token, expires_in } = response.data;
 
@@ -129,8 +127,8 @@ class CacheManager {
             }
 
             return null;
-        } catch (error) {
-            throw new Error('Error refreshing token');
+        } catch (error: any) {
+            throw new Error(error);
         }
     }
 
@@ -152,9 +150,22 @@ class CacheManager {
         try {
             return await this.sadd(`roomPlayers:${roomId}`, userId);
         } catch (error) {
-            console.log(error);
             throw new Error('Error joining room');
         }
+    }
+
+    public async deleteRoom(roomId: string, userId: string): Promise<void> {
+        try {
+            await this.del(`roomPlayers:${roomId}`);
+            await this.del(`room:${roomId}`);
+        } catch (error) {
+            throw new Error('Error deleting room');
+        }
+    }
+
+    public async accessToRoom(roomId: string, userId: string) {
+        const host = await this.hget(`room:${roomId}`, 'host');
+        return (host === userId);
     }
 }
 

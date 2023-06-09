@@ -13,12 +13,18 @@ export const createRoom = async function (request: FastifyRequest, reply: Fastif
 export const joinRoom = async function (request: FastifyRequest, reply: FastifyReply) {
     const { 'user-id': userId } = request.cookies!;
     const { roomId } = request.params! as { roomId: string };
-    // check room existence
-    if (!(await cacheManager.validateRoom(roomId))) {
-        return reply.code(404).send({ error: "Room not found" });
-    }
     // Add member to room
     const added = await cacheManager.addMember(roomId, userId!);
+    if (added) {
+        reply.code(201).send('User successfuly joined room');
+    }
+    reply.code(208).send('User has already joined the room');
+}
 
-    reply.code(added ? 201 : 208).send(added ? 'User successfuly joined room' : 'User has already joined the room');
+export const deleteRoom = async function (request: FastifyRequest, reply: FastifyReply) {
+    const { 'user-id': userId } = request.cookies!;
+    const { roomId } = request.params! as { roomId: string };
+
+    await cacheManager.deleteRoom(roomId, userId!);
+    reply.code(204);
 }
