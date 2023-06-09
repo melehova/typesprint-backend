@@ -23,11 +23,9 @@ export const callback = async function (request: FastifyRequest, reply: FastifyR
 
         const { access_token } = tokenResponse.data;
 
-        const response = await axios.get('https://oauth2.googleapis.com/tokeninfo', {
+        const { data: { sub: userId, expires_in } } = await axios.get('https://oauth2.googleapis.com/tokeninfo', {
             params: { access_token },
         });
-
-        const { data: { sub: userId, expires_in } } = response;
 
         // Store the access token in Redis
         await cacheManager.addToken(userId, access_token, expires_in);
@@ -46,9 +44,8 @@ export const callback = async function (request: FastifyRequest, reply: FastifyR
         });
         reply.redirect(`http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}/room`);
 
-        // reply.send({ message: 'OAuth callback successful' });
-    } catch (error) {
-        reply.code(500).send({ error: 'OAuth callback failed' });
+    } catch (error: any) {
+        reply.code(500).send({ error: error.message });
     }
 };
 

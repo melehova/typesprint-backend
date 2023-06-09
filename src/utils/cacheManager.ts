@@ -68,12 +68,11 @@ class CacheManager {
         }
     }
 
-    public async addToken(userId: string, token: string, expiredIn: string): Promise<void[]> { // ok
+    public async addToken(userId: string, token: string, expiredIn: string): Promise<void> { // ok
         const expiresAt = new Date(new Date().getTime() + +expiredIn * 1000).toISOString();
 
-        const tokenPromise = this.hset(`token:${userId}`, 'token', token);
-        const ExpPromise = this.hset(`token:${userId}`, 'expiresAt', expiresAt);
-        return Promise.all([tokenPromise, ExpPromise]);
+        await this.hset(`token:${userId}`, 'token', token);
+        await this.hset(`token:${userId}`, 'expiresAt', expiresAt);
     }
 
     public async deleteToken(userId: string): Promise<void> { // ok
@@ -117,7 +116,6 @@ class CacheManager {
                 client_secret: process.env.GOOGLE_CLIENT_SECRET,
                 grant_type: 'refresh_token',
             });
-            console.log(response);
 
             const { access_token, expires_in } = response.data;
 
