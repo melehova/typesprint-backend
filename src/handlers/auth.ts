@@ -42,7 +42,7 @@ export const callback = async function (request: FastifyRequest, reply: FastifyR
             httpOnly: true,
             maxAge: 3600,
         });
-        reply.redirect(`http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}/room`);
+        reply.redirect(`http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}/callback`);
 
     } catch (error: any) {
         reply.code(500).send({ error: error.message });
@@ -60,5 +60,28 @@ export const logout = async function (request: FastifyRequest, reply: FastifyRep
         reply.send({ message: 'Logout successful' });
     } catch (error) {
         reply.code(500).send({ error: 'Logout failed' });
+    }
+}
+
+export const profile = async function (request: FastifyRequest, reply: FastifyReply) {
+    try {
+        const { 'user-id': userId = '', 'access-token': accessToken = '' } = request.cookies;
+
+        /// Make a GET request to the People API
+        const { data: { names: [{ displayName }], photos: [{ url }] } } = await axios.get('https://people.googleapis.com/v1/people/me', {
+            // const response = await axios.get('https://people.googleapis.com/v1/people/me', {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+            params: {
+                personFields: 'names,photos',
+            },
+        });
+
+        reply.code(200).send({name: displayName, photo: url});
+
+    } catch (error: any) {
+        reply.code(500).send({ error: error.message });
+
     }
 }
