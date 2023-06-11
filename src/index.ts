@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import fastify, { errorCodes } from 'fastify';
 import fastifySocketIO from 'fastify-socket.io';
+import cors from '@fastify/cors';
 
 import cookie from '@fastify/cookie';
 import type { FastifyCookieOptions } from '@fastify/cookie';
@@ -31,6 +32,11 @@ server.setErrorHandler(function (error, request, reply) {
         // fastify will use parent error handler to handle this
         reply.send(error);
     }
+})
+
+server.register(cors, {
+    origin: 'http://localhost:5173',
+    credentials: true,
 })
 
 server.register(cookie, {
