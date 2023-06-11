@@ -57,7 +57,8 @@ export const logout = async function (request: FastifyRequest, reply: FastifyRep
         reply.clearCookie('access-token');
         reply.clearCookie('user-id');
 
-        reply.send({ message: 'Logout successful' });
+        reply.redirect(`http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}/callback`);
+
     } catch (error) {
         reply.code(500).send({ error: 'Logout failed' });
     }
