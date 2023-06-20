@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import axios from 'axios';
 import cacheManager from '../utils/cacheManager';
+import { addToken, deleteToken } from '../helpers/token';
 
 export const login = async function (request: FastifyRequest, reply: FastifyReply) {
     const redirectUri = `http://${process.env.HOST}:${process.env.PORT}/api/callback`;
@@ -12,7 +13,6 @@ export const callback = async function (request: FastifyRequest, reply: FastifyR
     try {
         const { code } = request.query as { code?: string };
 
-        // Exchange authorization code for access token
         const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', {
             code,
             client_id: process.env.GOOGLE_CLIENT_ID,
@@ -27,10 +27,8 @@ export const callback = async function (request: FastifyRequest, reply: FastifyR
             params: { access_token },
         });
 
-        // Store the access token in Redis
-        await cacheManager.addToken(userId, access_token, expires_in);
+        await addToken(userId, access_token, expires_in);
 
-        // Set the access token as a cookie
         reply.setCookie('access-token', access_token, {
             path: '/',
             httpOnly: true,
@@ -52,8 +50,7 @@ export const callback = async function (request: FastifyRequest, reply: FastifyR
 export const logout = async function (request: FastifyRequest, reply: FastifyReply) {
     try {
         const { 'user-id': userId } = request.cookies;
-        // Remove user data from Redis
-        await cacheManager.deleteToken(userId || '');
+        await deleteToken(userId || '');
         reply.clearCookie('access-token');
         reply.clearCookie('user-id');
 
@@ -68,9 +65,7 @@ export const profile = async function (request: FastifyRequest, reply: FastifyRe
     try {
         const { 'user-id': userId = '', 'access-token': accessToken = '' } = request.cookies;
 
-        /// Make a GET request to the People API
         const { data: { names: [{ displayName }], photos: [{ url }] } } = await axios.get('https://people.googleapis.com/v1/people/me', {
-            // const response = await axios.get('https://people.googleapis.com/v1/people/me', {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
             },
@@ -79,7 +74,7 @@ export const profile = async function (request: FastifyRequest, reply: FastifyRe
             },
         });
 
-        reply.code(200).send({name: displayName, photo: url});
+        reply.code(200).send({ name: displayName, photo: url });
 
     } catch (error: any) {
         reply.code(500).send({ error: error.message });

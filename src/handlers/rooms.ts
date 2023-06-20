@@ -1,12 +1,12 @@
-import { FastifyRequest, FastifyReply, FastifyBaseLogger } from 'fastify';
-import cacheManager from '../utils/cacheManager';
+import { FastifyRequest, FastifyReply } from 'fastify';
+import { createRoom as cCreateRoom, addMember, deleteRoom as cDeleteRoom } from '../helpers/room';
 import { v4 as uuidv4 } from 'uuid';
 
 export const createRoom = async function (request: FastifyRequest, reply: FastifyReply) {
     const { 'user-id': userId } = request.cookies!;
     // Create Room
     const roomId = uuidv4();
-    await cacheManager.createRoom(roomId, userId!);
+    await cCreateRoom(roomId, userId!);
     reply.send({ roomId });
 };
 
@@ -14,7 +14,7 @@ export const joinRoom = async function (request: FastifyRequest, reply: FastifyR
     const { 'user-id': userId } = request.cookies!;
     const { roomId } = request.params! as { roomId: string };
     // Add member to room
-    const added = await cacheManager.addMember(roomId, userId!);
+    const added = await addMember(roomId, userId!);
     if (added) {
         reply.code(201).send({message: 'User successfuly joined room'});
         return
@@ -25,6 +25,6 @@ export const joinRoom = async function (request: FastifyRequest, reply: FastifyR
 export const deleteRoom = async function (request: FastifyRequest, reply: FastifyReply) {
     const { roomId } = request.params! as { roomId: string };
 
-    await cacheManager.deleteRoom(roomId);
+    await cDeleteRoom(roomId);
     reply.code(204);
 }
