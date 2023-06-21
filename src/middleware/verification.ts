@@ -19,16 +19,17 @@ export default async (request: FastifyRequest, reply: FastifyReply, done: HookHa
         reply.setCookie('access-token', accessToken, {
             path: '/',
             httpOnly: true,
-            maxAge: 3600,
+            maxAge: 30 * 24 * 60 * 60,
         });
 
         reply.setCookie('user-id', userId, {
             path: '/',
             httpOnly: true,
-            maxAge: 3600,
+            maxAge: 30 * 24 * 60 * 60,
         });
 
     } catch (error: any) {
+        console.error(error);
         reply.code(500).send({ error });
     }
 };

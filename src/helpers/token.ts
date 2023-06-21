@@ -8,7 +8,7 @@ export const addToken = async (userId: string, token: string, expiredIn: string)
     await cacheManager.hset(`token:${userId}`, 'expiresAt', expiresAt);
 }
 
-export const deleteToken = async (userId: string): Promise<void> => { 
+export const deleteToken = async (userId: string): Promise<void> => {
     await cacheManager.del(`token:${userId}`);
 }
 
@@ -55,6 +55,6 @@ export const refreshToken = async (userId: string, token: string): Promise<any> 
 
         return null;
     } catch (error: any) {
-        throw new Error(error);
+        return null        
     }
 }
