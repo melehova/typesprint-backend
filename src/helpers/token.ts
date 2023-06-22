@@ -17,7 +17,7 @@ export const validateToken = async (userId: string, token: string): Promise<bool
 
     if (cachedToken && cachedToken.token === token) {
         const currentTime = new Date().getTime();
-        const expiresAt = new Date(cachedToken.expiresAt).getTime();
+        const expiresAt = new Date(cachedToken.expiresAt as string).getTime();
 
         if (currentTime < expiresAt) {
             return true;

@@ -8,7 +8,6 @@ import type { FastifyCookieOptions } from '@fastify/cookie';
 
 import cacheManager from './utils/cacheManager';
 import router from './routes/http';
-import verification from './middleware/verification';
 
 import { roomHandler } from './handlers/socket';
 import { Server } from 'socket.io';
@@ -85,5 +84,3 @@ server.ready((err) => {
         roomHandler(io, socket);
     });
 });
-
-server.get('/', { preHandler: verification }, (req, reply) => 'boom');

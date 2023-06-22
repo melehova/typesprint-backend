@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { login, logout, callback, profile } from '../handlers/auth';
 import { createRoom, joinRoom, deleteRoom } from '../handlers/rooms';
-import verification from '../middleware/verification';
+import verification from '../middleware/verification/http';
 import { validateRoom, accessToRoom } from '../middleware/rooms';
 
 export default function router(server: FastifyInstance, opts: any, done: () => void): void {

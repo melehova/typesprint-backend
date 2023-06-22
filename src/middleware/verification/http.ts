@@ -1,6 +1,5 @@
 import { FastifyRequest, FastifyReply, HookHandlerDoneFunction } from 'fastify';
-import cacheManager from '../utils/cacheManager';
-import { validateToken} from '../helpers/token';
+import { validateToken} from '../../helpers/token';
 
 export default async (request: FastifyRequest, reply: FastifyReply, done: HookHandlerDoneFunction) => {
     try {

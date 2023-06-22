@@ -3,10 +3,10 @@ import { createRoom as cCreateRoom, addMember, deleteRoom as cDeleteRoom } from 
 import { v4 as uuidv4 } from 'uuid';
 
 export const createRoom = async function (request: FastifyRequest, reply: FastifyReply) {
-    const { 'user-id': userId, 'access-token': accessToken } = request.cookies!;
+    const { 'user-id': userId } = request.cookies!;
     // Create Room
     const roomId = uuidv4();
-    await cCreateRoom(roomId, userId!, accessToken!);
+    await cCreateRoom(roomId, userId!);
     reply.send({ roomId });
 };
 

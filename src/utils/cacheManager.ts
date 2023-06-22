@@ -17,36 +17,25 @@ class CacheManager {
         console.log('Successfully connected to Redis');
     };
 
-    public async hget<T>(key: string, field: string): Promise<string | null> {
-        try {
-            return await this.redis.hGet(key, field) || null;
-        } catch (error) {
-            throw new Error('Error accessing hash cache');
-        }
+    public async hget<T>(key: string, field: string): Promise<T | null> {
+        const value = await this.redis.hGet(key, field);
+        return value ? JSON.parse(value) : null;
+
     }
 
-    public async hgetall<T>(key: string): Promise<{ [x: string]: string; } | null> {
-        try {
-            return await this.redis.hGetAll(key);
-        } catch (error) {
-            throw new Error('Error accessing hash cache');
-        }
+    public async hgetall<T>(key: string): Promise<{ [x: string]: T } | null> {
+        const values = await this.redis.hGetAll(key);
+        return values ? Object.fromEntries(Object.entries(values).map(([k, v]) => [k, JSON.parse(v)])) : null;
     }
 
-    public async hset(key: string, field: string, value: any): Promise<void> {
-        try {
-            await this.redis.hSet(key, field, typeof value !== 'string' ? JSON.stringify(value) : value);
-        } catch (error) {
-            throw new Error('Error setting hash cache');
-        }
+
+    public async hset(key: string, field: string, value: any): Promise<number> {
+        return await this.redis.hSet(key, field, JSON.stringify(value));
+
     }
 
     public async hdel(key: string, field: string): Promise<void> {
-        try {
-            await this.redis.hDel(key, field);
-        } catch (error) {
-            throw new Error('Error deleting hash cache');
-        }
+        await this.redis.hDel(key, field);
     }
 
     public async del(key: string): Promise<number> {
