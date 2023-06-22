@@ -11,6 +11,7 @@ import router from './routes/http';
 import verification from './middleware/verification';
 
 import { roomHandler } from './handlers/socket';
+import { Server } from 'socket.io';
 
 dotenv.config();
 const server = fastify({
@@ -78,25 +79,10 @@ server.ready((err) => {
     if (err) {
         throw err;
     }
+    const io: Server = server.io;
 
-    server.io.on('connection', (socket) => {
-        // const room = 'some room';
-        // console.log(socket.handshake.headers.cookie);
-        // socket.join(room);
-        // console.log(`A user [${socket.id}] joined [${room}]`);
-        // socket.to(room).emit('message', `A user [${socket.id}] joined [${room}]`);
-
-        // socket.on('message', (message) => {
-        //     console.log('Received message:', message);
-        //     // Broadcast the message to all connected clients
-        //     socket.to(room).emit('message', message);
-        // });
-
-        // socket.on('disconnect', (socket) => {
-        //     console.log(`A user [${socket}] disconnected`);
-        // });
-        // console.log(socket.handshake.headers.cookie);
-        roomHandler(socket);
+    io.on('connection', (socket) => {
+        roomHandler(io, socket);
     });
 });
 
