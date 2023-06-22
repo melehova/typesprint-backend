@@ -57,12 +57,12 @@ class CacheManager {
         }
     }
 
-    public async sadd(key: string, member: string): Promise<number> {
-        try {
-            return await this.redis.sAdd(key, member);
-        } catch (error) {
-            throw new Error('Error adding value to set');
-        }
+    public async sadd(key: string, member: string | object): Promise<number> {
+        return await this.redis.sAdd(key, JSON.stringify(member));
+    }
+
+    public async smembers(key: string) {
+        return (await this.redis.sMembers(key)).map(m => JSON.parse(m));
     }
 }
 

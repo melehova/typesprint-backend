@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import axios from 'axios';
-import cacheManager from '../utils/cacheManager';
 import { addToken, deleteToken } from '../helpers/token';
+import { getProfileData } from '../helpers/user';
 
 export const login = async function (request: FastifyRequest, reply: FastifyReply) {
     const redirectUri = `http://${process.env.HOST}:${process.env.PORT}/api/callback`;
@@ -50,7 +50,7 @@ export const callback = async function (request: FastifyRequest, reply: FastifyR
 export const logout = async function (request: FastifyRequest, reply: FastifyReply) {
     try {
         const { 'user-id': userId } = request.cookies;
-        await deleteToken(userId || '');
+        await deleteToken(userId!);
         reply.clearCookie('access-token');
         reply.clearCookie('user-id');
 
@@ -63,18 +63,9 @@ export const logout = async function (request: FastifyRequest, reply: FastifyRep
 
 export const profile = async function (request: FastifyRequest, reply: FastifyReply) {
     try {
-        const { 'user-id': userId = '', 'access-token': accessToken = '' } = request.cookies;
+        const { 'user-id': userId, 'access-token': accessToken } = request.cookies;
 
-        const { data: { names: [{ displayName }], photos: [{ url }] } } = await axios.get('https://people.googleapis.com/v1/people/me', {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-            },
-            params: {
-                personFields: 'names,photos',
-            },
-        });
-
-        reply.code(200).send({ name: displayName, photo: url });
+        reply.code(200).send(await getProfileData(accessToken!));
 
     } catch (error: any) {
         reply.code(500).send({ error: error.message });

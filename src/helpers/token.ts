@@ -38,7 +38,6 @@ export const validateToken = async (userId: string, token: string): Promise<bool
 
 export const refreshToken = async (userId: string, token: string): Promise<any> => {
     try {
-        console.log('refresh', { userId, token });
         const response: AxiosResponse = await axios.post('https://oauth2.googleapis.com/token', {
             refresh_token: token,
             client_id: process.env.GOOGLE_CLIENT_ID,

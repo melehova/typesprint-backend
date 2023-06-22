@@ -7,8 +7,10 @@ import cookie from '@fastify/cookie';
 import type { FastifyCookieOptions } from '@fastify/cookie';
 
 import cacheManager from './utils/cacheManager';
-import router from './routes';
+import router from './routes/http';
 import verification from './middleware/verification';
+
+import { roomHandler } from './handlers/socket';
 
 dotenv.config();
 const server = fastify({
@@ -24,9 +26,7 @@ const server = fastify({
 
 server.setErrorHandler(function (error, request, reply) {
     if (error instanceof errorCodes.FST_ERR_BAD_STATUS_CODE) {
-        // Log error
         this.log.error(error);
-        // Send error response
         reply.status(500).send({ ok: false });
     } else {
         // fastify will use parent error handler to handle this
@@ -80,20 +80,23 @@ server.ready((err) => {
     }
 
     server.io.on('connection', (socket) => {
-        const room = 'some room';
-        socket.join(room);
-        console.log(`A user [${socket.id}] joined [${room}]`);
-        socket.to(room).emit('message', `A user [${socket.id}] joined [${room}]`);
+        // const room = 'some room';
+        // console.log(socket.handshake.headers.cookie);
+        // socket.join(room);
+        // console.log(`A user [${socket.id}] joined [${room}]`);
+        // socket.to(room).emit('message', `A user [${socket.id}] joined [${room}]`);
 
-        socket.on('message', (message) => {
-            console.log('Received message:', message);
-            // Broadcast the message to all connected clients
-            socket.to(room).emit('message', message);
-        });
+        // socket.on('message', (message) => {
+        //     console.log('Received message:', message);
+        //     // Broadcast the message to all connected clients
+        //     socket.to(room).emit('message', message);
+        // });
 
-        socket.on('disconnect', (socket) => {
-            console.log(`A user [${socket}] disconnected`);
-        });
+        // socket.on('disconnect', (socket) => {
+        //     console.log(`A user [${socket}] disconnected`);
+        // });
+        // console.log(socket.handshake.headers.cookie);
+        roomHandler(socket);
     });
 });
 

@@ -1,11 +1,12 @@
 import cacheManager from "../utils/cacheManager"
 import { GAME_STATE } from "../gamestates";
+import { getProfileData } from "./user";
 
-export const createRoom = async (roomId: string, userId: string) => {
+export const createRoom = async (roomId: string, userId: string, accessToken: string) => {
     try {
         await cacheManager.hset(`room:${roomId}`, 'host', userId);
         await cacheManager.hset(`room:${roomId}`, 'state', GAME_STATE.LOBBY);
-        await addMember(roomId, userId);
+        await addMember(roomId, userId, accessToken!);
     } catch (error) {
         throw new Error('Error creating room');
     }
@@ -15,11 +16,15 @@ export const validateRoom = async (roomId: string): Promise<number> => {
     return await cacheManager.redis.exists(`room:${roomId}`);
 }
 
-export const addMember = async (roomId: string, userId: string): Promise<number> => {
+export const addMember = async (roomId: string, userId: string, accessToken: string): Promise<number> => {
     try {
-        return await cacheManager.sadd(`roomPlayers:${roomId}`, userId);
-    } catch (error) {
+        const { name, photo } = await getProfileData(accessToken);
+        return await cacheManager.sadd(`roomPlayers:${roomId}`, { userId, name, photo });
+    } catch (error: any) {
+        // console.error(error?.data?.error || error?.message || error)
+        console.error(error?.response?.data?.error)
         throw new Error('Error joining room');
+
     }
 }
 
@@ -51,4 +56,10 @@ export const shiftHost = async (roomId: string) => {
 export const removeMember = (roomId: string, userId: string) => {
     // Delete user from roomPlayers
     // TODO
+}
+
+export const getRoomInfo = async (roomId: string) => {
+    const members = await cacheManager.smembers(`roomPlayers:${roomId}`);
+    const room = await cacheManager.hgetall(`room:${roomId}`);
+    return { members, ...room, id: roomId }
 }

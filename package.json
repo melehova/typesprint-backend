@@ -18,6 +18,7 @@
     "@fastify/cors": "^8.3.0",
     "@types/node": "^20.2.5",
     "axios": "^1.4.0",
+    "cookie": "^0.5.0",
     "dotenv": "^16.1.0",
     "fastify": "^4.17.0",
     "fastify-socket.io": "^4.0.0",
