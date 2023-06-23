@@ -1,9 +1,9 @@
 import { Server, Socket } from 'socket.io';
-import { addMember, getRoomInfo, removeMember, validateRoom, isUserHost, shiftHost, startGame } from '../helpers/room';
+import { addMember, getRoomInfo, removeMember, validateRoom, isUserHost, shiftHost, startGame, fetchWords } from '../helpers/room';
 import cookie from 'cookie';
 
 export const roomHandler = (io: Server, socket: Socket): void => {
-    const { 'user-id': userId, 'access-token': accessToken } = cookie.parse(socket.handshake.headers.cookie!);
+    const { 'user-id': userId, 'access-token': accessToken } = cookie.parse(socket.handshake.headers.cookie! || '');
 
 
     socket.on('joinRoom', async (roomId: string) => {
@@ -35,6 +35,9 @@ export const roomHandler = (io: Server, socket: Socket): void => {
         // TODO
         await startGame(roomId, userId);
         // get words
+        const words = await fetchWords();
+        const roomInfo = await getRoomInfo(roomId);
+        io.in(roomId).emit('gameStarted', { ...roomInfo, words });
         // send words and updated room info
     })
 

@@ -10,6 +10,7 @@ declare global {
             REDIS_HOST: string;
             REDIS_PORT: number;
             REDIS_PWD: string;
+            WORDS_API_URL: string;
         }
     }
 }

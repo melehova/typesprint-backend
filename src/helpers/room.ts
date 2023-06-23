@@ -1,6 +1,7 @@
 import cacheManager from "../utils/cacheManager"
 import { GAME_STATE } from "../gamestates";
 import { getProfileData } from "./user";
+import axios from "axios";
 
 export const createRoom = async (roomId: string, userId: string) => {
     try {
@@ -72,4 +73,14 @@ export const startGame = async (roomId: string, userId: string) => {
         return -1;
     }
     return await cacheManager.hset(`room:${roomId}`, 'state', GAME_STATE.ACTIVE);
+}
+
+export const fetchWords = async (timerDuration = 60000) => {
+    const { data } = await axios.get(process.env.WORDS_API_URL, {
+        params: {
+            words: timerDuration / 1000 * 5
+        }
+    });
+
+    return data;
 }
