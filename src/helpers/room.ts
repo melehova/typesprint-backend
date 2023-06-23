@@ -17,10 +17,13 @@ export const validateRoom = async (roomId: string): Promise<number> => {
 
 export const addMember = async (roomId: string, userId: string, accessToken: string): Promise<number> => {
     try {
+        const state = await cacheManager.hget(`room:${roomId}`, 'state');
+        if (state !== GAME_STATE.LOBBY) {
+            return -1;
+        }
         const { name, photo } = await getProfileData(accessToken);
         return await cacheManager.hset(`roomPlayers:${roomId}`, userId, { userId, name, photo });
     } catch (error: any) {
-        console.error(error?.response?.data?.error)
         throw new Error('Error joining room');
     }
 }
@@ -62,4 +65,11 @@ export const getRoomInfo = async (roomId: string) => {
 
 export const isUserHost = async (roomId: string, userId: string) => {
     return await cacheManager.hget(`room:${roomId}`, 'host') === userId
+}
+
+export const startGame = async (roomId: string, userId: string) => {
+    if (!await accessToRoom(roomId, userId)) {
+        return -1;
+    }
+    return await cacheManager.hset(`room:${roomId}`, 'state', GAME_STATE.ACTIVE);
 }

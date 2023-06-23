@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io';
-import { addMember, getRoomInfo, removeMember, validateRoom, isUserHost, shiftHost } from '../helpers/room';
+import { addMember, getRoomInfo, removeMember, validateRoom, isUserHost, shiftHost, startGame } from '../helpers/room';
 import cookie from 'cookie';
 
 export const roomHandler = (io: Server, socket: Socket): void => {
@@ -12,9 +12,12 @@ export const roomHandler = (io: Server, socket: Socket): void => {
             socket.emit('invalidRoom');
         } else {
             try {
-                await addMember(roomId, userId, accessToken);
+                const added = await addMember(roomId, userId, accessToken);
+                if (added === -1) {
+                    return socket.emit('gameIsAlreadyStarted');
+                }
             } catch (error) {
-                socket.emit('authError');
+                return socket.emit('authError');
             }
             socket.join(roomId);
 
@@ -30,12 +33,10 @@ export const roomHandler = (io: Server, socket: Socket): void => {
 
     socket.on('gameStart', async (roomId: string) => {
         // TODO
-        // update status
+        await startGame(roomId, userId);
         // get words
         // send words and updated room info
-
     })
-
 
 };
 
