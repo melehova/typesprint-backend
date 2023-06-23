@@ -65,7 +65,7 @@ export const profile = async function (request: FastifyRequest, reply: FastifyRe
     try {
         const { 'user-id': userId, 'access-token': accessToken } = request.cookies;
 
-        reply.code(200).send(await getProfileData(accessToken!));
+        reply.code(200).send({ userId, ...(await getProfileData(accessToken!)) });
 
     } catch (error: any) {
         reply.code(500).send({ error: error.message });
