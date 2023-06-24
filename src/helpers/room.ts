@@ -82,5 +82,5 @@ export const fetchWords = async (timerDuration = 60000) => {
         }
     });
 
-    return data;
+    return [...new Set(data)];
 }
