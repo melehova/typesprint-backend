@@ -37,11 +37,15 @@ export const roomHandler = (io: Server, socket: Socket): void => {
         const roomInfo = await getRoomInfo(roomId);
         io.in(roomId).emit('gameStarted', { ...roomInfo, words });
 
-        
+
         socket.on('disconnect', async () => {
             leaveRoomEventHandler(io, socket, roomId, userId);
         })
-    }) 
+    })
+
+    socket.on('updateProgressAndSpeed', async (roomId: string, progress: number, speedWPM: number) => {
+        io.in(roomId).emit('updatedProgressAndSpeed', { [userId]: { progress, speedWPM } });
+    })
 
 };
 

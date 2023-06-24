@@ -78,7 +78,7 @@ export const startGame = async (roomId: string, userId: string) => {
 export const fetchWords = async (timerDuration = 60000) => {
     const { data } = await axios.get(process.env.WORDS_API_URL, {
         params: {
-            words: timerDuration / 1000 * 5
+            words: timerDuration / 1000
         }
     });
 
