@@ -32,14 +32,16 @@ export const roomHandler = (io: Server, socket: Socket): void => {
     })
 
     socket.on('gameStart', async (roomId: string) => {
-        // TODO
         await startGame(roomId, userId);
-        // get words
         const words = await fetchWords();
         const roomInfo = await getRoomInfo(roomId);
         io.in(roomId).emit('gameStarted', { ...roomInfo, words });
-        // send words and updated room info
-    })
+
+        
+        socket.on('disconnect', async () => {
+            leaveRoomEventHandler(io, socket, roomId, userId);
+        })
+    }) 
 
 };
 
