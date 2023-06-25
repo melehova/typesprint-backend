@@ -69,11 +69,20 @@ export const isUserHost = async (roomId: string, userId: string) => {
 }
 
 export const startGame = async (roomId: string, userId: string) => {
+    return await setGameState(roomId, GAME_STATE.ACTIVE, userId);
+}
+
+export const restartGame = async (roomId: string, userId: string) => {
+    return await setGameState(roomId, GAME_STATE.LOBBY, userId);
+}
+
+const setGameState = async (roomId: string, state: number, userId: string) => {
     if (!await accessToRoom(roomId, userId)) {
         return -1;
     }
-    return await cacheManager.hset(`room:${roomId}`, 'state', GAME_STATE.ACTIVE);
+    return await cacheManager.hset(`room:${roomId}`, 'state', state);
 }
+
 
 export const fetchWords = async (timerDuration = 60000) => {
     const { data } = await axios.get(process.env.WORDS_API_URL, {
@@ -83,4 +92,5 @@ export const fetchWords = async (timerDuration = 60000) => {
     });
 
     return [...new Set(data)];
+    // return [...new Set(data.map((e: string) => e[0]))]; // FOR TEST
 }

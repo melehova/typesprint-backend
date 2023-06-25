@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io';
-import { addMember, getRoomInfo, removeMember, validateRoom, isUserHost, shiftHost, startGame, fetchWords } from '../helpers/room';
+import { addMember, getRoomInfo, removeMember, validateRoom, isUserHost, shiftHost, startGame, fetchWords, restartGame } from '../helpers/room';
 import cookie from 'cookie';
 
 export const roomHandler = (io: Server, socket: Socket): void => {
@@ -43,8 +43,24 @@ export const roomHandler = (io: Server, socket: Socket): void => {
         })
     })
 
-    socket.on('updateProgressAndSpeed', async (roomId: string, progress: number, speedWPM: number) => {
-        io.in(roomId).emit('updatedProgressAndSpeed', { [userId]: { progress, speedWPM } });
+    socket.on('updateProgressAndSpeed', async (roomId: string, progress: number, statisticsData: object) => {
+        io.in(roomId).emit('updatedProgressAndSpeed', { [userId]: { progress, ...statisticsData } });
+
+        socket.on('disconnect', async () => {
+            leaveRoomEventHandler(io, socket, roomId, userId);
+        })
+    })
+
+    socket.on('restartGame', async (roomId: string) => {
+        await restartGame(roomId, userId);
+
+        const words = await fetchWords();
+        const roomInfo = await getRoomInfo(roomId);
+        io.in(roomId).emit('restartedGame', { ...roomInfo, words });
+
+        socket.on('disconnect', async () => {
+            leaveRoomEventHandler(io, socket, roomId, userId);
+        })
     })
 
 };

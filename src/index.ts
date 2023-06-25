@@ -81,6 +81,8 @@ server.ready((err) => {
     const io: Server = server.io;
 
     io.on('connection', (socket) => {
+        socket.setMaxListeners(20); 
+        
         roomHandler(io, socket);
     });
 });
