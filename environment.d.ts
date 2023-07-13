@@ -11,6 +11,8 @@ declare global {
             REDIS_PORT: number;
             REDIS_PWD: string;
             WORDS_API_URL: string;
+            DATABASE_BASE_URL: string;
+            DATABASE_DATASOURCE: string;
         }
     }
 }
