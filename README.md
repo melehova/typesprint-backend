@@ -27,7 +27,7 @@ Welcome to the backend of **Typesprint**, a real-time multiplayer game platform 
    npm install
    ```
 3. **Configure environment:**
-   - Copy `.env.example` to `.env` and set your environment variables.
+   - Set your environment variables.
 4. **Run the server:**
    ```sh
    npm start
